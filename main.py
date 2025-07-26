@@ -11,5 +11,10 @@ app.secret_key = os.getenv("SECRET_KEY")
 # Registra o Blueprint de autenticação
 app.register_blueprint(auth_routes)
 
+# Rota principal para status
+@app.route("/")
+def index():
+    return "API online: Smollan Brasil Tech"
+
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
