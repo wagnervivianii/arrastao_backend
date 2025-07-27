@@ -1,12 +1,17 @@
 from flask import Flask
 from view.auth_routes import auth_routes
 from dotenv import load_dotenv
+from flask import Flask, jsonify
+from flask_jwt_extended import JWTManager
 import os
 
 load_dotenv()  # Carrega variáveis do .env
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY")
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
+
+jwt = JWTManager(app)
 
 # Registra o Blueprint de autenticação
 app.register_blueprint(auth_routes)
