@@ -2,7 +2,9 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from controller.auth_controller import processar_callback
 from auth_config import AuthConfig
+from werkzeug.security import check_password_hash
 from flask import Flask
+from models import db, Usuario, AutenticacaoLocal
 import os
 
 # Blueprint de autenticação
@@ -28,11 +30,28 @@ def login():
     usuario = dados.get("usuario")
     senha = dados.get("senha")
 
-    if usuario == "admin" and senha == "123":
-        token = create_access_token(identity=usuario)
-        return jsonify(access_token=token), 200
+    if not usuario or not senha:
+        return jsonify({"msg": "Usuário e senha são obrigatórios"}), 400
 
-    return jsonify({"msg": "Usuário ou senha inválido"}), 401
+    user = Usuario.query.filter_by(nome=usuario).first()
+    if not user:
+        return jsonify({"msg": "Usuário não encontrado"}), 404
+
+    auth = AutenticacaoLocal.query.filter_by(id_usuario=user.id).first()
+    if not auth or not check_password_hash(auth.senha_hash, senha):
+        return jsonify({"msg": "Senha incorreta"}), 401
+
+    token = create_access_token(identity=user.nome)
+
+    return jsonify({
+        "access_token": token,
+        "user": {
+            "id": user.id,
+            "nome": user.nome,
+            "email": user.email,
+            "nivel": user.nivel_permissao
+        }
+    }), 200
 
 @auth_routes.route("/dados-protegidos", methods=["GET"])
 @jwt_required()
